@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
 	}
 
 	int i;
-	for (i = 0; i < 5; ++i) {
+	for (i = 0; i < 10; ++i) {
+		printf("No.%04d ", i+1);
 		capture_socket_once(fd, proto_parse);
 	}
 

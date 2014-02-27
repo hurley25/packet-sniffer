@@ -48,27 +48,39 @@ const char eth_proto_str[][24] = {
 				"LOOPBACK" 
                                 };
 
+// 网络层协议及其高层协议解析
+static void ip_protocal_parse(const struct ip *ip_head);
+
 // 数据链路层解析
-static void data_link_layer_parse(const struct ether_header *addr)   
+static void data_link_layer_parse(const struct ether_header *eth_head); 
+
+// 协议解析函数
+void proto_parse(const uint8_t *buf, int size)
 {
-	printf("源Mac地址: ");
+	data_link_layer_parse((struct ether_header *)buf);
+}
+
+// 数据链路层解析
+static void data_link_layer_parse(const struct ether_header *eth_head)
+{
+	printf("源Mac: ");
 
 	int i;
 	for(i = 0; i < ETHER_ADDR_LEN - 1; i++)  
 	{  
-		printf("%02x:", addr->ether_shost[i]);  
+		printf("%02x:", eth_head->ether_shost[i]);  
 	}  
-	printf("%02x ", addr->ether_shost[i]);
+	printf("%02x ", eth_head->ether_shost[i]);
 	
-	printf("目标Mac地址: ");
+	printf("目标Mac: ");
 	for(i = 0; i < ETHER_ADDR_LEN - 1; i++)  
 	{  
-		printf("%02x:", addr->ether_dhost[i]);  
+		printf("%02x:", eth_head->ether_dhost[i]);  
 	}  
-	printf("%02x ", addr->ether_dhost[i]);
+	printf("%02x ", eth_head->ether_dhost[i]);
 
 	const char *proto_type_str = "未知协议";
-	uint16_t proto_type = htons(addr->ether_type);
+	uint16_t proto_type = ntohs(eth_head->ether_type);
 	
 	for (i = 0; i < sizeof(eth_proto_id)/sizeof(*eth_proto_id); ++i) {
 		if (proto_type == eth_proto_id[i]) {
@@ -77,47 +89,51 @@ static void data_link_layer_parse(const struct ether_header *addr)
 		}
 	}
 	printf("协议类型: %s", proto_type_str);
+	
+	const uint8_t *proto_buf = (uint8_t *)eth_head;
+	proto_buf += sizeof(struct ether_header);
+	
+	const struct ip *ip_head = (struct ip *)proto_buf;
+
+	switch (ntohs(eth_head->ether_type)) {
+	case ETHERTYPE_IP:
+		ip_protocal_parse(ip_head);
+		break;
+	case ETHERTYPE_ARP:
+		break;
+	// TODO
+	default:
+		printf("(高层协议暂未支持)");
+	}
+	printf("\n");
 }
 
-// IP协议及其高层协议解析
+// 网络层协议及其高层协议解析
 static void ip_protocal_parse(const struct ip *ip_head)
 {
 	struct protoent *proto = getprotobynumber(ip_head->ip_p);
 
 	assert(proto != NULL);
 	printf("(%s) ", proto->p_name);  
-	printf("源IP: %-15s ", inet_ntoa(ip_head->ip_src));  
-	printf("目标IP: %-15s ", inet_ntoa(ip_head->ip_dst));
+
+	const uint8_t *proto_buf = (uint8_t *)ip_head;
+	proto_buf += sizeof(struct ip);
+
+	struct tcphdr *tcp_head = (struct tcphdr *)proto_buf;
+	struct udphdr *udp_head = (struct udphdr *)proto_buf;
 
 	switch (ip_head->ip_p) {
-	//case :
-	default:
+	case IPPROTO_TCP:
+		printf("源IP: %s:%d ", inet_ntoa(ip_head->ip_src), ntohs(tcp_head->source));
+		printf("目标IP: %s:%d ", inet_ntoa(ip_head->ip_dst), ntohs(tcp_head->dest));
 		break;
-	}
-}
-
-// 协议解析函数
-void proto_parse(const uint8_t *buf, int size)
-{
-	const uint8_t *proto_buf = buf;
-	const struct ether_header *eth_head = (struct ether_header *)proto_buf;
-	proto_buf += sizeof(struct ether_header);
-
-	data_link_layer_parse(eth_head);
-
-	const struct ip *ip_head = (struct ip *)proto_buf;
-
-	switch (htons(eth_head->ether_type)) {
-	case ETHERTYPE_IP:
-		ip_protocal_parse(ip_head);
+	case IPPROTO_UDP:
+		printf("源IP: %s:%d ", inet_ntoa(ip_head->ip_src), ntohs(udp_head->source));
+		printf("目标IP: %s:%d ", inet_ntoa(ip_head->ip_dst), ntohs(udp_head->dest));
 		break;
 	// TODO
-	//case ETHERTYPE_ARP:
-	//	break;
 	default:
-		printf("高层协议暂未支持");
+		break;
 	}
-
-	printf("\n");
 }
 
