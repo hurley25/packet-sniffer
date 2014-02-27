@@ -20,9 +20,14 @@
 
 int main(int argc, char *argv[])
 {
+	if (argc != 3 || strcmp(argv[1], "-i") != 0) {
+		print_usage();
+		exit(EXIT_SUCCESS);
+	}
+
 	int fd;
 	
-	if ((fd = init_socket("wlan0")) < 0) {
+	if ((fd = init_socket(argv[2])) < 0) {
 		exit(EXIT_FAILURE);
 	}
 
@@ -31,7 +36,7 @@ int main(int argc, char *argv[])
 		capture_socket_once(fd, proto_parse);
 	}
 
-	drop_socket(fd, "wlan0");
+	drop_socket(fd, argv[2]);
 
 	return EXIT_SUCCESS;
 }

@@ -49,6 +49,8 @@
 
 void ps_debug(char *debug_info);
 
+void print_usage();
+
 // 设置/取消网卡的混杂模式
 bool set_network_promise(int conn_fd, char *net_name, bool choose);
 

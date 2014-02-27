@@ -57,12 +57,14 @@ int init_socket(char *net_name)
 	}
 
 	if (!set_network_promise(fd, net_name, true)) {
+		close(fd);
 		return -1;	
 	}
 
 	int recv_size = RECV_BUF_SIZE;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &recv_size, sizeof(int)) < 0) {
 		ps_debug("init socket:");
+		close(fd);
 		return -1;	
 	}
 	
@@ -74,6 +76,7 @@ int init_socket(char *net_name)
 
 	if (ioctl(fd, SIOCGIFINDEX, &ifr) < 0) {
 		ps_debug("init socket:");
+		close(fd);
 		return -1;
 	}
 	
@@ -86,6 +89,7 @@ int init_socket(char *net_name)
 	
 	if (bind(fd, (struct sockaddr *)&sock_ll, sizeof(sock_ll)) < 0) {
 		ps_debug("bind:");
+		close(fd);
 		return -1;
 	}
 
