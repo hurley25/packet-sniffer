@@ -22,17 +22,20 @@
 #define PS_DEBUG
 
 #include <unistd.h>
+#include <netdb.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/if_ether.h>
 #include <net/ethernet.h>
 #include <net/if.h>
 #include <netpacket/packet.h>
 #include <arpa/inet.h>
-#include <linux/if_ether.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -61,13 +64,13 @@ int init_socket(char *net_name);
 void drop_socket(int conn_fd, char *net_name);
 
 // 捕获数据包一次
-void capture_socket_once(int conn_fd, void (*func)(uint8_t *, int));
+void capture_socket_once(int conn_fd, void (*func)(const uint8_t *, int));
 
 // 捕获数据包
-void capture_socket(int conn_fd, void (*func)(uint8_t *, int));
+void capture_socket(int conn_fd, void (*func)(const uint8_t *, int));
 
 // 协议解析函数
-void proto_parse(uint8_t *buf, int size);
+void proto_parse(const uint8_t *buf, int size);
 
 #endif 	// PACKET_SNIFFER_H_
 

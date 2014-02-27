@@ -105,7 +105,7 @@ void drop_socket(int conn_fd, char *net_name)
 }
 
 // 捕获数据包一次
-void capture_socket_once(int conn_fd, void (*func)(uint8_t *, int))
+void capture_socket_once(int conn_fd, void (*func)(const uint8_t *, int))
 {
 	uint8_t recv_buf[RECV_BUF_SIZE];
 	socklen_t socklen;
@@ -117,7 +117,7 @@ void capture_socket_once(int conn_fd, void (*func)(uint8_t *, int))
 }
 
 // 捕获数据包
-void capture_socket(int conn_fd, void (*func)(uint8_t *, int))
+void capture_socket(int conn_fd, void (*func)(const uint8_t *, int))
 {
 	uint8_t recv_buf[RECV_BUF_SIZE];
 	socklen_t socklen;
