@@ -50,27 +50,32 @@
 // 套结字接收缓冲区大小
 #define RECV_BUF_SIZE 4096
 
+typedef enum {
+	protocol_all = ETH_P_ALL,
+	protocol_ip = ETH_P_IP,
+	protocol_ipv6 = ETH_P_IPV6,
+	protocol_arp = ETH_P_ARP,
+	protocol_rarp = ETH_P_RARP
+} protocol_t;
+
 void ps_debug(char *debug_info);
 
 void print_usage();
 
-// 设置/取消网卡的混杂模式
-bool set_network_promise(int conn_fd, char *net_name, bool choose);
-
 // 初始化捕获套结字
-int init_socket(char *net_name);
+int init_socket(char *net_name, protocol_t proto_type, bool is_promise);
 
 // 销毁捕获套结字
 void drop_socket(int conn_fd, char *net_name);
 
 // 捕获数据包一次
-void capture_socket_once(int conn_fd, void (*func)(const uint8_t *, int));
+void capture_socket_once(int conn_fd, void (*call_back_func)(const uint8_t *, int));
 
 // 捕获数据包
-void capture_socket(int conn_fd, void (*func)(const uint8_t *, int));
+void capture_socket(int conn_fd, void (*call_back_func)(const uint8_t *, int));
 
 // 协议解析函数
-void proto_parse(const uint8_t *buf, int size);
+void proto_parse(const uint8_t *proto_buf, int length);
 
 #endif 	// PACKET_SNIFFER_H_
 

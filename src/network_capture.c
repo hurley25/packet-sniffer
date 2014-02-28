@@ -1,9 +1,9 @@
 /*
  * =====================================================================================
  *
- *       Filename:  network.h
+ *       Filename:  network_capture.c
  *
- *    Description:  网络设置相关函数
+ *    Description:  网络数据包捕获相关函数
  *
  *        Version:  1.0
  *        Created:  2014年02月27日 14时40分40秒
@@ -19,7 +19,7 @@
 #include "packet-sniffer.h"
 
 // 设置/取消网卡的混杂模式
-bool set_network_promise(int conn_fd, char *net_name, bool choose)
+static bool set_network_promise(int conn_fd, char *net_name, bool choose)
 {
 	struct ifreq ifr;
 	bzero(&ifr, sizeof(ifr));
@@ -47,18 +47,20 @@ bool set_network_promise(int conn_fd, char *net_name, bool choose)
 }
 
 // 初始化捕获套结字
-int init_socket(char *net_name)
+int init_socket(char *net_name, protocol_t proto_type, bool is_promise)
 {
 	int fd;
 	
-	if ((fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0 ) {
+	if ((fd = socket(AF_PACKET, SOCK_RAW, htons(proto_type))) < 0 ) {
 		ps_debug("init socket:");
 		return -1;
 	}
 
-	if (!set_network_promise(fd, net_name, true)) {
-		close(fd);
-		return -1;	
+	if (is_promise) {
+		if (!set_network_promise(fd, net_name, true)) {
+			close(fd);
+			return -1;	
+		}
 	}
 
 	int recv_size = RECV_BUF_SIZE;
@@ -70,8 +72,6 @@ int init_socket(char *net_name)
 	
 	struct ifreq ifr;
 	bzero(&ifr, sizeof(ifr));
-
-	assert(net_name != NULL);
 	strcpy(ifr.ifr_name, net_name);
 
 	if (ioctl(fd, SIOCGIFINDEX, &ifr) < 0) {
@@ -85,7 +85,7 @@ int init_socket(char *net_name)
 	bzero(&sock_ll, sizeof(sock_ll));
 	sock_ll.sll_family = AF_PACKET;
 	sock_ll.sll_ifindex = ifr.ifr_ifindex;
-	sock_ll.sll_protocol = htons(ETH_P_ALL);
+	sock_ll.sll_protocol = htons(proto_type);
 	
 	if (bind(fd, (struct sockaddr *)&sock_ll, sizeof(sock_ll)) < 0) {
 		ps_debug("bind:");
@@ -105,7 +105,7 @@ void drop_socket(int conn_fd, char *net_name)
 }
 
 // 捕获数据包一次
-void capture_socket_once(int conn_fd, void (*func)(const uint8_t *, int))
+void capture_socket_once(int conn_fd, void (*call_back_func)(const uint8_t *, int))
 {
 	uint8_t recv_buf[RECV_BUF_SIZE];
 	socklen_t socklen;
@@ -113,11 +113,11 @@ void capture_socket_once(int conn_fd, void (*func)(const uint8_t *, int))
 
 	bzero(recv_buf, RECV_BUF_SIZE);
 	size = recvfrom(conn_fd, recv_buf, RECV_BUF_SIZE, 0, NULL, &socklen);
-	func(recv_buf, size);
+	call_back_func(recv_buf, size);
 }
 
 // 捕获数据包
-void capture_socket(int conn_fd, void (*func)(const uint8_t *, int))
+void capture_socket(int conn_fd, void (*call_back_func)(const uint8_t *, int))
 {
 	uint8_t recv_buf[RECV_BUF_SIZE];
 	socklen_t socklen;
@@ -128,7 +128,7 @@ void capture_socket(int conn_fd, void (*func)(const uint8_t *, int))
 		if ((size = recvfrom(conn_fd, recv_buf, RECV_BUF_SIZE, 0, NULL, &socklen)) < 0) {
 			continue;
 		}
-		func(recv_buf, size);
+		call_back_func(recv_buf, size);
 	}
 }
 
