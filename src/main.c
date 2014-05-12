@@ -27,12 +27,12 @@ int main(int argc, char *argv[])
 
 	int fd;
 	
-	if ((fd = init_socket(argv[2], protocol_ip, true)) < 0) {
+	if ((fd = init_socket(argv[2], protocol_ip, false)) < 0) {
 		exit(EXIT_FAILURE);
 	}
 
 	int i;
-	for (i = 0; i < 20; ++i) {
+	for (i = 0; i < 30; ++i) {
 		printf("No.%04d ", i+1);
 		capture_socket_once(fd, proto_parse);
 	}
