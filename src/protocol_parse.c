@@ -168,8 +168,8 @@ static void udp_protocal_parse(const uint8_t *proto_buf, int length)
 {
 	const struct ip *ip_head = (const struct ip *)(proto_buf - sizeof(struct ip));
 	const struct udphdr *udp_head = (const struct udphdr *)proto_buf;
-	proto_buf += sizeof(struct tcphdr);
-	length -= sizeof(struct tcphdr);
+	proto_buf += sizeof(struct udphdr);
+	length -= sizeof(struct udphdr);
 
 	printf("源IP: %s:%u ", inet_ntoa(ip_head->ip_src), ntohs(udp_head->source));
 	printf("目标IP: %s:%u ", inet_ntoa(ip_head->ip_dst), ntohs(udp_head->dest));
